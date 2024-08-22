@@ -35,6 +35,7 @@ enum Command {
     MoveLeft,
     MoveRight,
     GetPosition,
+    Execute(Box<dyn FnOnce() + Send>)
 }
 
 
@@ -66,6 +67,9 @@ fn start_event_loop(receiver: mpsc::Receiver<Command>, sender: mpsc::Sender<(i32
             Ok(Command::GetPosition) => {
                 let _ = sender.send((player.x, player.y));
             }
+            Ok(Command::Execute(func)) =>{
+                func();
+            }
             Err(_) => {
                 println!("error");
                 break;
@@ -93,6 +97,9 @@ fn main() {
             "s" => sender_cmd.send(Command::MoveDown).unwrap(),
             "a" => sender_cmd.send(Command::MoveLeft).unwrap(),
             "d" => sender_cmd.send(Command::MoveRight).unwrap(),
+            "f" => sender_cmd.send(Command::Execute(Box::new(move || {
+                println!("Yohoho!")
+            }))).unwrap(),
             "p" => {
                 sender_cmd.send(Command::GetPosition).unwrap();
                 let (x, y) = pos_receiver.recv().unwrap();
